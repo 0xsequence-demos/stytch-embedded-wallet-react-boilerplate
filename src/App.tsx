@@ -17,19 +17,32 @@ const styles = {
   },
 };
 
+function getDomainAndPort(url: any) {
+  try {
+      const parsedUrl = new URL(url);
+      const domain = parsedUrl.hostname;
+      const port = parsedUrl.port;
+      return port ? `${parsedUrl.protocol}//${domain}:${port}` : `${parsedUrl.protocol}//${domain}`;
+  } catch (error) {
+      console.error('Invalid URL:', error);
+      return null; // Return null for invalid URLs
+  }
+}
+
 function App() {
   const stytch = useStytch();
 
   const { user } = useStytchUser();
   const [embeddedWalletAddress, setEmbeddedWalletAddress] = useState<any>(null)
   const [errorMessage, setErrorMessage] = useState<any>(null)
-
+  const url = window.location.origin
+  
   const config = {
     products: [Products.emailMagicLinks],
     emailMagicLinksOptions: {
-      loginRedirectURL: 'http://localhost:4444/authenticate',
+      loginRedirectURL: `${url}/authenticate`,
       loginExpirationMinutes: 60,
-      signupRedirectURL: 'http://localhost:4444/authenticate',
+      signupRedirectURL: `${url}/authenticate`,
       signupExpirationMinutes: 60,
     },
   };
@@ -43,6 +56,12 @@ function App() {
         await stytch.magicLinks.authenticate(token, {
           session_duration_minutes: 60,
         });
+        const url = window.location
+        const baseUrl = getDomainAndPort(url);
+        
+        if (baseUrl) {
+            window.location.href = baseUrl; // This will change the browser's URL
+        }
       }
 
       if(user){
@@ -73,26 +92,6 @@ function App() {
 
     stytch.session.revoke()
     setErrorMessage(null)
-
-    function getDomainAndPort(url: any) {
-      try {
-          const parsedUrl = new URL(url);
-          const domain = parsedUrl.hostname;
-          const port = parsedUrl.port;
-  
-          return port ? `${parsedUrl.protocol}//${domain}:${port}` : `${parsedUrl.protocol}//${domain}`;
-      } catch (error) {
-          console.error('Invalid URL:', error);
-          return null; // Return null for invalid URLs
-      }
-    }
-  
-    const url = window.location
-    const baseUrl = getDomainAndPort(url);
-    
-    if (baseUrl) {
-        window.location.href = baseUrl; // This will change the browser's URL
-    }
   }
 
   return (
